@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Search</title>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+		<script>
+			$(document).ready(function () {
+				$("#search-button").click(function () {
+					var searchTerm = $("#search-term").val();
+					let csrftoken = $("[name=csrfmiddlewaretoken]").val();
+					// Start the search in the background.
+					$.ajax({
+						url: "/search/",
+						type: "POST",
+						data: { q: searchTerm },
+						headers: {
+							"X-CSRFToken": csrftoken
+						},
+						async:true,
+						success: function (data) {
+							console.log(data);
+							// Update the search results tab with the results.
+							$("#search-results").html(data);
+						},
+					});
+				});
+
+				$("#check-button").click(function () {
+					var searchTerm = $("#search-term").val();
+					let csrftoken = $("[name=csrfmiddlewaretoken]").val();
+					// Start the search in the background.
+					$.ajax({
+						url: "/test_post/aaa",
+						type: "POST",
+						data: { q: searchTerm },
+						headers: {
+							"X-CSRFToken": csrftoken
+						},
+						async:true,
+						success: function (data) {
+							console.log(data);
+							// Update the search results tab with the results.
+							$("#check-results").html(data);
+						},
+					});
+				});
+
+				$("#async-request").click(function () {
+					var searchTerm = $("#search-term").val();
+					let csrftoken = $("[name=csrfmiddlewaretoken]").val();
+					// Start the search in the background.
+					$.ajax({
+						url: "/async_request/",
+						type: "POST",
+						data: { q: searchTerm },
+						headers: {
+							"X-CSRFToken": csrftoken
+						},
+						async:true,
+						success: function (data) {
+							console.log(data);
+							// Update the search results tab with the results.
+						},
+					});
+				});
+
+				// const socket = new WebSocket('ws://localhost:9000/chat/test');
+
+				// socket.onopen = function() {
+				// 	// Subscribe to the Redis channel
+				// 	socket.send(JSON.stringify({
+				// 		'type': 'subscribe',
+				// 		'channel': 'test'
+				// 	}));
+				// 	console.log("Socket success")
+				// };
+
+				// socket.onmessage = function(event) {
+				// 	// Handle incoming messages from the server
+				// 	const message = JSON.parse(event.data);
+				// 	const status = message.status
+				// 	if (status && window.location.pathname == "/search/") {
+				// 		window.location.href = "/search/"
+				// 	}
+				// 	console.log('Received message from server:', message);
+				// };
+
+				// socket.error = function(event) {
+				// 	// Handle errors
+				// 	console.error('WebSocket error:', event);
+				// }
+
+				if(typeof(EventSource) !== "undefined") {
+					// Yes! Server-sent events support!
+					var source = new EventSource("{% url 'stream' %}");
+
+					source.onopen = function(event) {
+						console.log("open event");
+					}
+
+					source.onerror = function(event) {
+						console.log("Error");
+						console.log(event);
+					}
+					source.onmessage = function(event) {
+						// This function will be called whenever there's an update.
+						console.log(event.data);
+						$("#search-results").text(event.data);
+					};
+
+					window.addEventListener('beforeunload', (event) => {
+						// Close your stream here
+						source.close();
+					});
+				} else {
+					// Sorry! No server-sent events support..
+					console.warn("Does not support server-sent events");
+				}
+
+			});
+		</script>
+	</head>
+	<body>
+		<h1>Search</h1>
+		{% csrf_token %}
+		<a href="{% url 'index_1' %}">index_1</a>
+		<a href="{% url 'search' %}">search</a>
+
+		<input type="text" id="search-term" placeholder="Search term" />
+		<button id="search-button">Search</button>
+		<button> <a href="{% url 'clear_cache_session' %}">clear_cache_session</a></button>
+		<button id="check-button">check method</button>
+		<button id="async-request">async_request</button>
+
+		<div id="search-results">{{users}}</div>
+		<div>{{ query }}</div>
+		<div id="check-results"></div>
+	</body>
+</html>
