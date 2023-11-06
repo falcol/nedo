@@ -170,17 +170,17 @@ async def stream_messages_view(request):
         while True:
             body = f"data: {datetime.now()}\n"
             data = await cache.aget("search_user", [])
-            if not initial_data == data:
+            if not initial_data == data and data:
                 yield "\ndata: {}\n\n".format(data)
                 initial_data = data
             await asyncio.sleep(2)
 
     # Create a new streaming task and store it in the request object
     current_stream_task = event_stream(request)
-
-    return StreamingHttpResponse(current_stream_task, content_type="text/event-stream")
-
-
+    response = StreamingHttpResponse(current_stream_task, content_type="text/event-stream")
+    response['Cache-Control'] = 'no-cache'
+    response['Transfer-Encoding'] = 'chunked'
+    return response
 
 
 def clear_cache_session(request):
