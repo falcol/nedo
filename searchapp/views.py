@@ -14,6 +14,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from asgiref.sync import async_to_sync, sync_to_async
 from channels.db import database_sync_to_async
 from django import forms
+from django.contrib import auth
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
@@ -158,11 +159,13 @@ class SearchView(View):
 
 
 async def stream_messages_view(request):
-    async def event_stream():
+    async def event_stream(request):
         body = f"data: {datetime.now()}\n"
         body_len = len(body)
         print(body_len)
         initial_data = None
+        user = await sync_to_async(auth.get_user)(request)
+        print(user.pk)
 
         while True:
             body = f"data: {datetime.now()}\n"
@@ -173,7 +176,7 @@ async def stream_messages_view(request):
             await asyncio.sleep(2)
 
     # Create a new streaming task and store it in the request object
-    current_stream_task = event_stream()
+    current_stream_task = event_stream(request)
 
     return StreamingHttpResponse(current_stream_task, content_type="text/event-stream")
 
