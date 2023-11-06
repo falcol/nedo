@@ -78,7 +78,7 @@ class SearchView(View):
         }
         return context
 
-    # @async_login_required(login_url="/index_1/")
+    # @async_login_required(login_url="/login/")
     async def get(self, request, *args, **kwargs):
         context = await self.get_data(request)
 
@@ -213,3 +213,7 @@ class LoginView(View):
         form = LoginForm(request.GET)
         context = {"form": form}
         return render(request, "login.html", context)
+
+    async def post(self, request, *args, **kwargs):
+        r = request.POST
+        return HttpResponse(json.dumps({"status": "ok", "data": r}))
