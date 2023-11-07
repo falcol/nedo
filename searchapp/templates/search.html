@@ -101,6 +101,7 @@
 					source.onerror = function(event) {
 						console.log("Error");
 						console.log(event);
+						source.close();
 					}
 					source.onmessage = function(event) {
 						// This function will be called whenever there's an update.
