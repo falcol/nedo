@@ -166,12 +166,15 @@ async def stream_messages_view(request):
         initial_data = None
         user = await sync_to_async(auth.get_user)(request)
         print(user.pk)
+        query = await SearchView.get_session(request, "query")
+        print(query)
 
         while True:
             body = f"data: {datetime.now()}\n"
             data = await cache.aget("search_user", [])
+            query = await SearchView.get_session(request, "query")
             if not initial_data == data and data:
-                yield "\ndata: {}\n\n".format(data)
+                yield "\ndata: {}-{}\n\n".format(data, query)
                 initial_data = data
             await asyncio.sleep(2)
 
