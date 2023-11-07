@@ -19,6 +19,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.contrib.auth.views import redirect_to_login
+from django.contrib.sessions.models import Session
 from django.core.cache import cache
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import (
@@ -166,7 +167,7 @@ async def stream_messages_view(request):
         initial_data = None
         user = await sync_to_async(auth.get_user)(request)
         print(user.pk)
-        query = await SearchView.get_session(request, "query")
+        query = ""
         print(query)
 
         while True:
@@ -176,6 +177,8 @@ async def stream_messages_view(request):
             if not initial_data == data and data:
                 yield "\ndata: {}-{}\n\n".format(data, query)
                 initial_data = data
+            else:
+                initial_data = None
             await asyncio.sleep(2)
 
     # Create a new streaming task and store it in the request object
