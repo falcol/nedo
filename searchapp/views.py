@@ -193,7 +193,7 @@ async def stream_messages_view(request):
         print(query)
         count = 0
         while True:
-            body = f"data: date-{datetime.now()}\n"
+            body = f"data: date-{datetime.now()}\n\n"
             data = await cache.aget("search_user", [])
             query = await SearchView.get_session(request, "query")
             if not initial_data == data and data:
