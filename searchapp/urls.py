@@ -7,6 +7,7 @@ from .views import (
     LoginView,
     SearchView,
     clear_cache_session,
+    long_polling_view,
     stream_messages_view,
 )
 
@@ -17,7 +18,9 @@ urlpatterns = [
     path('search/', SearchView.as_view(), name='search'),
     path('test_post/<str:name>', SearchView.test_post_view, name='test_post'),
     path('async_request/', SearchView.async_request, name='async_request'),
+    path('action_update_data/', SearchView.action_update_data, name='action_update_data'),
     path('login/', LoginView.as_view(), name='LoginView'),
     path('stream/', stream_messages_view, name='stream'),
     path('clear_cache_session/', clear_cache_session, name='clear_cache_session'),
+    path('long_polling_view/', long_polling_view, name='long_polling_view'),
 ]
