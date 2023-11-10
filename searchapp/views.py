@@ -44,6 +44,8 @@ loop = asyncio.get_event_loop()
 rd = RedisPublisher()
 executors = {DEFAULT: AsyncIOExecutor()}
 scheduler = BackgroundScheduler()
+if not scheduler.running:
+    scheduler.start()
 
 
 class Index(View):
@@ -89,39 +91,35 @@ class SearchView(View):
         return render(request, "search.html", context)
 
     async def post(self, request, *args, **kwargs):
-        return await self.search_data(request)
+        return await self.search_data()
 
     @staticmethod
-    async def action_search(request):
+    async def action_search(self):
         print("Time sleep 5")
         await asyncio.sleep(3)
         print("Time sleep 5 done")
-        query = request.POST.get("q", "")
+        query = self.request.POST.get("q", "")
         users = User.objects.filter(username__icontains=query)
         users = await database_sync_to_async(list)(users.values('username', 'email'))
 
         await cache.aset("search_user", users, timeout=10)
-        await SearchView.set_session(request, "query", query)
-        query_session = await SearchView.get_session(request, "query")
+        await SearchView.set_session(self.request, "query", query)
+        query_session = await SearchView.get_session(self.request, "query")
         print(users)
         print("ss", query_session)
         # channel = "notify_test"
         # message = {"message": "Hello, Redis!", "status": True}
         # rd.publish(channel, message)
 
-    async def search_data(self, request):
+    async def search_data(self):
         run_time = datetime.now() + timedelta(seconds=1)
         job_id = str(uuid.uuid4())
 
         scheduler.add_job(
             async_to_sync(SearchView.action_search),
-            "date",
-            run_date=run_time,
             id=job_id,
-            args=[request],
+            args=[self],
         )
-        if not scheduler.running:
-            scheduler.start()
 
         return HttpResponse(json.dumps({"status": "ok"}))
 
@@ -138,8 +136,8 @@ class SearchView(View):
             )
         )
 
-    async def test_post_view(request, *args, **kwargs):
-        return await SearchView.test_post(request, **kwargs)
+    async def test_post_view(self, *args, **kwargs):
+        return await SearchView.test_post(self, **kwargs)
 
     async def update_async_data(self, *args, **kwargs):
         search_user = await cache.aget("search_user", [])
@@ -155,8 +153,8 @@ class SearchView(View):
             )
         )
 
-    async def action_update_data(request, *args, **kwargs):
-        return await SearchView.update_async_data(request, **kwargs)
+    async def action_update_data(self, *args, **kwargs):
+        return await SearchView.update_async_data(self, **kwargs)
 
     async def fetch(session, url):
         async with session.get(url) as response:
@@ -170,12 +168,9 @@ class SearchView(View):
             responses = await asyncio.gather(*tasks)
         return responses
 
-    async def async_request(request, *args, **kwargs):
+    async def async_request(self, *args, **kwargs):
         url = "https://jsonplaceholder.typicode.com/todos/"
-        urls = []
-        for i in range(1, 100):
-            urls.append(url + f"{i}")
-
+        urls = [f"{url}{i}" for i in range(1, 100)]
         responses = await SearchView.fetch_all(urls)
 
         return JsonResponse({"data": responses})
@@ -196,7 +191,7 @@ async def stream_messages_view(request):
             body = f"data: date-{datetime.now()}\n\n"
             data = await cache.aget("search_user", [])
             query = await SearchView.get_session(request, "query")
-            if not initial_data == data and data:
+            if initial_data != data and data:
                 yield "\ndata: {}-{}\n\n".format(data, query)
                 initial_data = data
             else:

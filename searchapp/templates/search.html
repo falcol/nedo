@@ -125,11 +125,11 @@
 						}
 						source.onmessage = function(event) {
 							// This function will be called whenever there's an update.
-							console.log(event);
 							if (parseInt(event.data)) {
 								$("#id_progress").attr('aria-valuenow', event.data)
 								$("#id_progress").css('width', event.data+"%")
 								$("#id_progress").text(event.data + "%")
+								$("#search-results").text(event.data);
 							} else {
 								console.log(event.data);
 								$("#search-results").text(event.data);
