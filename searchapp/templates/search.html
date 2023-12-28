@@ -94,6 +94,10 @@
 					console.log("Socket success")
 				};
 
+				socket.onclose = function(event) {
+					console.log(event);
+				}
+
 				socket.onmessage = function(event) {
 					// Handle incoming messages from the server
 					console.log(event)
@@ -109,6 +113,7 @@
 				socket.error = function(event) {
 					// Handle errors
 					console.error('WebSocket error:', event);
+					socket.close();
 				}
 
 				// if(typeof(EventSource) !== "undefined") {
