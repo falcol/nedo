@@ -3,41 +3,25 @@ import json
 import os
 import time
 import uuid
-from collections.abc import AsyncGenerator
-from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 
 import aiohttp
 import psutil
-import requests
 from apscheduler.executors.asyncio import AsyncIOExecutor
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.schedulers.background import BackgroundScheduler
 from asgiref.sync import async_to_sync, sync_to_async
 from channels.db import database_sync_to_async
 from django import forms
 from django.contrib import auth
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
-from django.contrib.auth.views import redirect_to_login
-from django.contrib.sessions.models import Session
 from django.core.cache import cache
-from django.core.serializers.json import DjangoJSONEncoder
-from django.http import (
-    HttpRequest,
-    HttpResponse,
-    HttpResponseRedirect,
-    JsonResponse,
-    StreamingHttpResponse,
-)
-from django.shortcuts import redirect, render, resolve_url
-from django.utils.decorators import classonlymethod, method_decorator
+from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
+from django.shortcuts import redirect, render
+from django.utils.decorators import classonlymethod
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import View
 
 from chat.redis_ps import RedisPublisher
-from searchapp.as_login_required import async_login_required
 
 DEFAULT = "default"
 loop = asyncio.get_event_loop()
@@ -107,9 +91,9 @@ class SearchView(View):
         query_session = await SearchView.get_session(self.request, "query")
         print(users)
         print("ss", query_session)
-        # channel = "notify_test"
-        # message = {"message": "Hello, Redis!", "status": True}
-        # rd.publish(channel, message)
+        channel = "notify_test"
+        message = {"message": "Hello, Redis!", "status": True}
+        rd.publish(channel, message)
 
     async def search_data(self):
         run_time = datetime.now() + timedelta(seconds=1)

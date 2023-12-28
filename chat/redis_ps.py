@@ -1,11 +1,16 @@
 import json
+import os
 
 import aioredis
 import redis
+from dotenv import load_dotenv
 
+load_dotenv()
 
+HOST = os.getenv("REDIS_HOST")
+PORT = os.getenv("REDIS_PORT")
 class AsyncRedisPublisher:
-    def __init__(self, host='localhost', port=6379):
+    def __init__(self, host=HOST, port=PORT):
         self.host = host
         self.port = port
         self.redis = None
@@ -26,7 +31,7 @@ class AsyncRedisPublisher:
 
 
 class RedisPublisher:
-    def __init__(self, host='localhost', port=6379, db=0):
+    def __init__(self, host=HOST, port=PORT, db=0):
         self.redis_client = redis.StrictRedis(host=host, port=port, db=db)
 
     def publish(self, channel_name, message):

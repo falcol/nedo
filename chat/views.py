@@ -1,20 +1,24 @@
 import json
+import os
 
 import aioredis
 from channels.generic.websocket import AsyncWebsocketConsumer
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
-        self.room_group_name = "chat_%s" % self.room_name
+        self.room_group_name = f"chat_{self.room_name}"
 
         # Join room group
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
 
         await self.accept()
         try:
-            self.redis = await aioredis.create_redis_pool("redis://localhost:6379")
+            self.redis = await aioredis.create_redis_pool(os.getenv("REDIS_URL"))
             self.response = await self.redis.subscribe(
                 channel=f"notify_{self.room_name}"
             )
@@ -39,16 +43,18 @@ class ChatConsumer(AsyncWebsocketConsumer):
         finally:
             self.redis.close()
             await self.redis.wait_closed()
+            await self.close()
             print("Redis closed successfully")
 
-        print("Joined chat room %s" % self.room_name)
-        print("Joined chat group: %s" % self.room_group_name)
+        print(f"Joined chat room {self.room_name}")
+        print(f"Joined chat group: {self.room_group_name}")
 
     async def disconnect(self, close_code):
         # Leave room group
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
         self.redis.close()
         await self.redis.wait_closed()
+        await self.close()
 
     # Receive message from WebSocket
     async def receive(self, text_data):

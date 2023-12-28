@@ -83,95 +83,74 @@
 					});
 				}
 
-				// const socket = new WebSocket('ws://localhost:9000/chat/test');
+				const socket = new WebSocket('ws://localhost:9000/chat/test');
 
-				// socket.onopen = function() {
-				// 	// Subscribe to the Redis channel
-				// 	socket.send(JSON.stringify({
-				// 		'type': 'subscribe',
-				// 		'channel': 'test'
-				// 	}));
-				// 	console.log("Socket success")
-				// };
+				socket.onopen = function() {
+					// Subscribe to the Redis channel
+					socket.send(JSON.stringify({
+						'type': 'subscribe',
+						'channel': 'test'
+					}));
+					console.log("Socket success")
+				};
 
-				// socket.onmessage = function(event) {
-				// 	// Handle incoming messages from the server
-				// 	const message = JSON.parse(event.data);
-				// 	const status = message.status
-				// 	if (status && window.location.pathname == "/search/") {
-				// 		window.location.href = "/search/"
-				// 	}
-				// 	console.log('Received message from server:', message);
-				// };
+				socket.onmessage = function(event) {
+					// Handle incoming messages from the server
+					console.log(event)
+					const message = JSON.parse(event.data);
+					const status = message.status
+					// if (status && window.location.pathname == "/search/") {
+					// 	window.location.href = "/search/"
+					// }
+					console.log('Received message from server:', message);
+					$("#search-results").text(event.data)
+				};
 
-				// socket.error = function(event) {
-				// 	// Handle errors
-				// 	console.error('WebSocket error:', event);
-				// }
-
-				if(typeof(EventSource) !== "undefined") {
-					function EventFillData() {
-						// Yes! Server-sent events support!
-						var source = new EventSource("{% url 'stream' %}", {withCredentials: true});
-
-						source.onopen = function(event) {
-							console.log("open event");
-						}
-
-						source.onerror = function(event) {
-							console.log("Error");
-							console.log(event);
-							source.close();
-						}
-						source.onmessage = function(event) {
-							// This function will be called whenever there's an update.
-							if (parseInt(event.data)) {
-								$("#id_progress").attr('aria-valuenow', event.data)
-								$("#id_progress").css('width', event.data+"%")
-								$("#id_progress").text(event.data + "%")
-								$("#search-results").text(event.data);
-							} else {
-								console.log(event.data);
-								$("#search-results").text(event.data);
-							}
-						};
-
-						window.addEventListener('beforeunload', (event) => {
-							// Close your stream here
-							source.close();
-						});
-					}
-					EventFillData()
-				} else {
-					// Sorry! No server-sent events support..
-					console.warn("Does not support server-sent events");
+				socket.error = function(event) {
+					// Handle errors
+					console.error('WebSocket error:', event);
 				}
+
+				// if(typeof(EventSource) !== "undefined") {
+				// 	function EventFillData() {
+				// 		// Yes! Server-sent events support!
+				// 		var source = new EventSource("{% url 'stream' %}", {withCredentials: true});
+
+				// 		source.onopen = function(event) {
+				// 			console.log("open event");
+				// 		}
+
+				// 		source.onerror = function(event) {
+				// 			console.log("Error");
+				// 			console.log(event);
+				// 			source.close();
+				// 		}
+				// 		source.onmessage = function(event) {
+				// 			// This function will be called whenever there's an update.
+				// 			if (parseInt(event.data)) {
+				// 				$("#id_progress").attr('aria-valuenow', event.data)
+				// 				$("#id_progress").css('width', event.data+"%")
+				// 				$("#id_progress").text(event.data + "%")
+				// 				$("#search-results").text(event.data);
+				// 			} else {
+				// 				console.log(event.data);
+				// 				$("#search-results").text(event.data);
+				// 			}
+				// 		};
+
+				// 		window.addEventListener('beforeunload', (event) => {
+				// 			// Close your stream here
+				// 			source.close();
+				// 		});
+				// 	}
+				// 	EventFillData()
+				// } else {
+				// 	// Sorry! No server-sent events support..
+				// 	console.warn("Does not support server-sent events");
+				// }
 
 			});
 
-			// function poll() {
-			// 	var data = parseInt($("#id_progress").attr('aria-valuenow')) || 1
-			// 	$.ajax({
-			// 		url: "/long_polling_view/",
-			// 		data: {test: data},
-			// 		timeout: 30000,
-			// 		success: function(data) {
-			// 			console.log(data.message, data.data);
-			// 			$("#id_progress").attr('aria-valuenow', data.data)
-			// 			$("#id_progress").css('width', data.data+"%")
-			// 			$("#id_progress").text(data.data + "%")
-			// 			// After receiving the response, start polling again
-			// 			poll();
-			// 		},
-			// 		error: function() {
-			// 			// In case of an error, wait for 5 seconds before starting the next poll
-			// 			setTimeout(poll, 5000);
-			// 		}
-			// 	});
-			// }
-
-			// // Start polling
-			// poll();
 		</script>
 	</head>
 	<body>
