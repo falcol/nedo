@@ -99,11 +99,16 @@ class SearchView(View):
         run_time = datetime.now() + timedelta(seconds=1)
         job_id = str(uuid.uuid4())
 
+        # Some error when use redis in job
         scheduler.add_job(
             async_to_sync(SearchView.action_search),
             id=job_id,
             args=[self],
         )
+
+        channel = "notify_test"
+        message = {"message": f"Hello, Redis! {datetime.now()}", "status": True}
+        rd.publish(channel, message)
 
         return HttpResponse(json.dumps({"status": "ok"}))
 
