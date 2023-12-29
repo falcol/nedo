@@ -1,7 +1,10 @@
+import asyncio
+import contextlib
 import json
 import os
 
 import aioredis
+import async_timeout
 from channels.generic.websocket import AsyncWebsocketConsumer
 from dotenv import load_dotenv
 
@@ -17,49 +20,46 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
 
         await self.accept()
-        try:
-            self.redis = await aioredis.create_redis_pool(os.getenv("REDIS_URL"))
-            self.response = await self.redis.subscribe(
-                channel=f"notify_{self.room_name}"
-            )
-            channel = self.response[0]
-            print("Connect to redis")
-            while await channel.wait_message():
-                raw_event = await channel.get(encoding="utf8")
-                try:
-                    event = json.loads(raw_event)
-                    print(event)
-                except json.JSONDecodeError as e:
-                    print(
-                        f"[{self.room_name}]Event '{raw_event}' was ignored.\n{e}"
-                    )
-                    await self.send(text_data=raw_event)
-                    continue
-                else:
-                    await self.send(text_data=raw_event)
-        except Exception as e:
-            print(f"User {self.room_name} Disconnected")
-            print(e)
-        finally:
-            self.redis.close()
-            await self.redis.wait_closed()
-            await self.close()
-            print("Redis closed successfully")
+        tsk = asyncio.create_task(self.pubsub())
+        await tsk
 
         print(f"Joined chat room {self.room_name}")
         print(f"Joined chat group: {self.room_group_name}")
 
+    async def pubsub(self):
+        self.redis = aioredis.Redis.from_url(
+            os.getenv("REDIS_URL"), decode_responses=True
+        )
+        self.psub = self.redis.pubsub()
+
+        async def reader(channel: aioredis.client.PubSub):
+            while True:
+                with contextlib.suppress(asyncio.TimeoutError):
+                    async with async_timeout.timeout(1):
+                        message = await channel.get_message(ignore_subscribe_messages=True)
+                        if message is not None:
+                            message_data = message['data']
+                            await self.send(text_data=message_data)
+                        await asyncio.sleep(0.01)
+
+        async with self.psub as p:
+            await p.subscribe(f"notify_{self.room_name}")
+            await reader(p)  # wait for reader to complete
+            await p.unsubscribe(f"notify_{self.room_name}")
+
+        # closing all open connections
+        await self.psub.close()
+
     async def disconnect(self, close_code):
         # Leave room group
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
-        self.redis.close()
-        await self.redis.wait_closed()
         await self.close()
+        await self.redis.close()
+        await self.psub.close()
 
     # Receive message from WebSocket
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
-        # message = text_data_json["message"]
 
         # Send message to room group
         await self.channel_layer.group_send(

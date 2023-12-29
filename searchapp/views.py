@@ -107,7 +107,8 @@ class SearchView(View):
         )
 
         channel = "notify_test"
-        message = {"message": f"Hello, Redis! {datetime.now()}", "status": True}
+        message = {"message": f"Hello, Redis! {datetime.now()}", "status": True, "user": '11', "jan": "A"}
+        data = {"type": "bug", "bug_id": ""}
         rd.publish(channel, message)
 
         return HttpResponse(json.dumps({"status": "ok"}))

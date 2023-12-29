@@ -22,7 +22,7 @@
 						success: function (data) {
 							console.log(data);
 							// Update the search results tab with the results.
-							$("#search-results").html(data);
+							// $("#search-results").html(data);
 						},
 					});
 				});
@@ -96,6 +96,7 @@
 
 				socket.onclose = function(event) {
 					console.log(event);
+					console.log("Socket Close")
 				}
 
 				socket.onmessage = function(event) {
