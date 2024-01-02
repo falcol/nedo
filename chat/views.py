@@ -20,8 +20,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(self.room_group_name, self.channel_name)
 
         await self.accept()
-        tsk = asyncio.create_task(self.pubsub())
-        await tsk
+        self.pubsub_task = asyncio.create_task(self.pubsub())
 
         print(f"Joined chat room {self.room_name}")
         print(f"Joined chat group: {self.room_group_name}")
@@ -52,6 +51,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def disconnect(self, close_code):
         # Leave room group
+        self.pubsub_task.cancel()
         await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
         await self.close()
         await self.redis.close()
@@ -63,7 +63,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         # Send message to room group
         await self.channel_layer.group_send(
-            self.room_group_name, {"type": "notify_message", "data": text_data_json}
+            self.room_group_name, {"type": "chat.message", "data": text_data_json}
         )
 
     # Receive message from room group

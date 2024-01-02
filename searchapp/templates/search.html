@@ -97,6 +97,7 @@
 				socket.onclose = function(event) {
 					console.log(event);
 					console.log("Socket Close")
+					socket.close();
 				}
 
 				socket.onmessage = function(event) {
